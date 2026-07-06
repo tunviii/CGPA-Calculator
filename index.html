@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CGPA Calculator</title>
+
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <main class="container">
+
+        <header class="app-header">
+            <p class="eyebrow">Academic planner</p>
+            <h1>CGPA Calculator</h1>
+            <p class="subtitle">Track this semester, combine it with completed credits, and preview future outcomes.</p>
+        </header>
+
+        <!-- Current Academic Details -->
+        <section class="card">
+
+            <h2>Current Academic Details</h2>
+
+            <div class="input-group">
+                <label for="currentCgpa">Current CGPA</label>
+                <input type="number" id="currentCgpa" step="0.01" placeholder="8.35">
+            </div>
+
+            <div class="input-group">
+                <label for="currentCredits">Completed Credits</label>
+                <input type="number" id="currentCredits" placeholder="80">
+            </div>
+
+        </section>
+
+        <!-- Semester Subjects -->
+        <section class="card">
+
+            <h2>Current Semester</h2>
+
+            <div id="subjects">
+
+            </div>
+
+            <div class="button-row">
+                <button id="addSubjectBtn" class="secondary-btn">
+                    + Add Subject
+                </button>
+
+                <button id="calculateSemesterBtn" class="primary-btn">
+                    Calculate Semester GPA
+                </button>
+            </div>
+
+            <h3 class="result">
+                Semester GPA:
+                <span id="semesterGpa">0.00</span>
+            </h3>
+
+        </section>
+
+        <!-- Overall CGPA -->
+        <section class="card highlight-card">
+
+            <button id="calculateCgpaBtn" class="primary-btn">
+                Calculate Overall CGPA
+            </button>
+
+            <h2 class="result large-result">
+                Overall CGPA:
+                <span id="overallCgpa">0.00</span>
+            </h2>
+
+        </section>
+
+        <!-- What If Mode -->
+        <section class="card">
+
+            <h2>What If Calculator</h2>
+
+            <div class="input-group">
+                <label for="futureCredits">Future Semester Credits</label>
+                <input type="number" id="futureCredits">
+            </div>
+
+            <div class="input-group">
+                <label for="expectedGpa">Expected GPA</label>
+                <input type="number" id="expectedGpa" step="0.01">
+            </div>
+
+            <button id="predictBtn" class="primary-btn">
+                Predict CGPA
+            </button>
+
+            <h3 class="result">
+                Projected CGPA:
+                <span id="predictedCgpa">0.00</span>
+            </h3>
+
+        </section>
+
+    </main>
+
+    <script src="js/script.js"></script>
+
+</body>
+</html>
