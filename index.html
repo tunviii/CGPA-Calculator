@@ -77,25 +77,29 @@
         <!-- What If Mode -->
         <section class="card">
 
-            <h2>What If Calculator</h2>
+            <h2>Graduation Simulator</h2>
 
-            <div class="input-group">
-                <label for="futureCredits">Future Semester Credits</label>
-                <input type="number" id="futureCredits">
+            <div id="futureSemesters">
             </div>
 
-            <div class="input-group">
-                <label for="expectedGpa">Expected GPA</label>
-                <input type="number" id="expectedGpa" step="0.01">
-            </div>
+            <div class="button-row">
+                <button id="addFutureSemesterBtn" class="secondary-btn">
+                    + Add Future Semester
+                </button>
 
-            <button id="predictBtn" class="primary-btn">
-                Predict CGPA
-            </button>
+                <button id="predictBtn" class="primary-btn">
+                    Predict Graduation CGPA
+                </button>
+            </div>
 
             <h3 class="result">
-                Projected CGPA:
+                Projected Graduation CGPA:
                 <span id="predictedCgpa">0.00</span>
+            </h3>
+
+            <h3 class="result">
+                Credits at Graduation:
+                <span id="projectedCredits">0</span>
             </h3>
 
         </section>

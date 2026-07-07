@@ -157,6 +157,11 @@ button:active{
     gap:10px;
 }
 
+#futureSemesters{
+    display:grid;
+    gap:14px;
+}
+
 .subject-row{
     align-items:center;
     background:#f8fafc;
@@ -181,6 +186,44 @@ button:active{
 
 .remove-btn:hover{
     background:#ffe2df;
+}
+
+.future-semester{
+    background:#f8fafc;
+    border:1px solid var(--line);
+    border-radius:8px;
+    display:grid;
+    gap:12px;
+    padding:14px;
+}
+
+.future-semester-header{
+    align-items:center;
+    display:grid;
+    gap:10px;
+    grid-template-columns:minmax(180px, 1fr) auto;
+}
+
+.future-semester-title{
+    font-weight:800;
+}
+
+.future-subjects{
+    display:grid;
+    gap:10px;
+}
+
+.semester-summary{
+    align-items:center;
+    color:var(--muted);
+    display:flex;
+    flex-wrap:wrap;
+    font-size:.9rem;
+    gap:12px;
+}
+
+.semester-summary strong{
+    color:var(--primary-dark);
 }
 
 .result{
@@ -231,6 +274,10 @@ button:active{
 
     .subject-row input[type="text"]{
         grid-column:1 / -1;
+    }
+
+    .future-semester-header{
+        grid-template-columns:1fr 44px;
     }
 
     .button-row,

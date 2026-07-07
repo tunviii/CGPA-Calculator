@@ -10,6 +10,7 @@ const gradePoints = {
 };
 
 const subjectsContainer = document.getElementById("subjects");
+const futureSemestersContainer = document.getElementById("futureSemesters");
 const storageKey = "cgpaCalculatorState";
 
 let semesterGpa = 0;
@@ -24,8 +25,70 @@ function setInputValue(id, value){
     document.getElementById(id).value = value || "";
 }
 
-function getSubjects(){
-    return Array.from(document.querySelectorAll(".subject-row")).map(row => ({
+function gradeOptions(selectedGrade = "S"){
+    return Object.keys(gradePoints).map(grade => {
+        const selected = grade === selectedGrade ? "selected" : "";
+        return `<option value="${grade}" ${selected}>${grade}</option>`;
+    }).join("");
+}
+
+function calculateRows(rows){
+    let totalCredits = 0;
+    let totalPoints = 0;
+
+    rows.forEach(row => {
+        const credits = Number(row.querySelector(".credits").value);
+        const grade = row.querySelector(".grade").value;
+
+        totalCredits += credits;
+        totalPoints += credits * gradePoints[grade];
+    });
+
+    return {
+        credits: totalCredits,
+        points: totalPoints,
+        gpa: totalPoints / totalCredits || 0
+    };
+}
+
+function createSubjectRow(subject = {}, onRemove = saveState){
+    const row = document.createElement("div");
+
+    row.className = "subject-row";
+
+    row.innerHTML = `
+        <input type="text" class="subject-name" placeholder="Subject" aria-label="Subject name">
+        <input type="number" class="credits" placeholder="Credits" aria-label="Subject credits">
+        <select class="grade" aria-label="Subject grade">
+            ${gradeOptions(subject.grade)}
+        </select>
+        <button class="remove-btn" aria-label="Remove subject" title="Remove subject">X</button>
+    `;
+
+    row.querySelector(".subject-name").value = subject.subject || "";
+    row.querySelector(".credits").value = subject.credits || "";
+
+    row.querySelector(".remove-btn").onclick = () => {
+        row.remove();
+        onRemove();
+        saveState();
+    };
+
+    row.addEventListener("input", () => {
+        onRemove();
+        saveState();
+    });
+
+    row.addEventListener("change", () => {
+        onRemove();
+        saveState();
+    });
+
+    return row;
+}
+
+function getSubjects(container){
+    return Array.from(container.querySelectorAll(".subject-row")).map(row => ({
         subject: row.querySelector(".subject-name").value,
         credits: row.querySelector(".credits").value,
         grade: row.querySelector(".grade").value
@@ -40,60 +103,108 @@ function saveState(){
     const state = {
         currentCgpa: getInputValue("currentCgpa"),
         currentCredits: getInputValue("currentCredits"),
-        futureCredits: getInputValue("futureCredits"),
-        expectedGpa: getInputValue("expectedGpa"),
         semesterGpa,
         semesterCredits,
         semesterGpaText: document.getElementById("semesterGpa").textContent,
         overallCgpaText: document.getElementById("overallCgpa").textContent,
         predictedCgpaText: document.getElementById("predictedCgpa").textContent,
-        subjects: getSubjects()
+        projectedCreditsText: document.getElementById("projectedCredits").textContent,
+        subjects: getSubjects(subjectsContainer),
+        futureSemesters: getFutureSemesters()
     };
 
     localStorage.setItem(storageKey, JSON.stringify(state));
 }
 
-// Add Subject Row
 function addSubject(subject = {}){
+    subjectsContainer.appendChild(createSubjectRow(subject));
+    saveState();
+}
 
-    const row = document.createElement("div");
+function addFutureSubject(semesterElement, subject = {}){
+    const subjectsList = semesterElement.querySelector(".future-subjects");
 
-    row.className = "subject-row";
+    subjectsList.appendChild(createSubjectRow(subject, () => {
+        updateFutureSemesterSummary(semesterElement);
+    }));
 
-    row.innerHTML = `
-        <input type="text" class="subject-name" placeholder="Subject" aria-label="Subject name">
+    updateFutureSemesterSummary(semesterElement);
+    saveState();
+}
 
-        <input type="number" class="credits" placeholder="Credits" aria-label="Subject credits">
+function updateFutureSemesterSummary(semesterElement){
+    const rows = semesterElement.querySelectorAll(".subject-row");
+    const totals = calculateRows(rows);
 
-        <select class="grade" aria-label="Subject grade">
-    <option value="S">S</option>
-    <option value="A">A</option>
-    <option value="B">B</option>
-    <option value="C">C</option>
-    <option value="D">D</option>
-    <option value="E">E</option>
-    <option value="F">F</option>
-    <option value="Ab">Ab</option>
-</select>
+    semesterElement.querySelector(".future-semester-gpa").textContent = totals.gpa.toFixed(2);
+    semesterElement.querySelector(".future-semester-credits").textContent = totals.credits;
+}
 
-        <button class="remove-btn" aria-label="Remove subject" title="Remove subject">X</button>
+function updateAllFutureSemesterSummaries(){
+    document.querySelectorAll(".future-semester").forEach(updateFutureSemesterSummary);
+}
+
+function addFutureSemester(semester = {}){
+    const semesterElement = document.createElement("div");
+    const semesterNumber = futureSemestersContainer.children.length + 1;
+
+    semesterElement.className = "future-semester";
+
+    semesterElement.innerHTML = `
+        <div class="future-semester-header">
+            <input
+                type="text"
+                class="future-semester-title"
+                aria-label="Future semester name"
+            >
+            <button class="remove-btn" aria-label="Remove future semester" title="Remove future semester">X</button>
+        </div>
+
+        <div class="future-subjects"></div>
+
+        <div class="button-row">
+            <button class="secondary-btn add-future-subject-btn" type="button">
+                + Add Subject
+            </button>
+        </div>
+
+        <div class="semester-summary">
+            <span>Semester GPA: <strong class="future-semester-gpa">0.00</strong></span>
+            <span>Credits: <strong class="future-semester-credits">0</strong></span>
+        </div>
     `;
 
-    row.querySelector(".subject-name").value = subject.subject || "";
-    row.querySelector(".credits").value = subject.credits || "";
-    row.querySelector(".grade").value = subject.grade || "S";
-
-    row.querySelector(".remove-btn").onclick = () => {
-        row.remove();
+    semesterElement.querySelector(".remove-btn").onclick = () => {
+        semesterElement.remove();
         saveState();
     };
 
-    row.addEventListener("input", saveState);
-    row.addEventListener("change", saveState);
+    semesterElement.querySelector(".future-semester-title").value =
+        semester.name || `Future Semester ${semesterNumber}`;
 
-    subjectsContainer.appendChild(row);
+    semesterElement.querySelector(".future-semester-title").addEventListener("input", saveState);
+    semesterElement.querySelector(".add-future-subject-btn").addEventListener("click", () => {
+        addFutureSubject(semesterElement);
+    });
+
+    futureSemestersContainer.appendChild(semesterElement);
+
+    if(semester.subjects && semester.subjects.length){
+        semester.subjects.forEach(subject => addFutureSubject(semesterElement, subject));
+    }
+    else{
+        addFutureSubject(semesterElement);
+    }
+
+    updateFutureSemesterSummary(semesterElement);
     saveState();
+}
 
+function getFutureSemesters(){
+    return Array.from(document.querySelectorAll(".future-semester")).map(semesterElement => ({
+        name: semesterElement.querySelector(".future-semester-title").value,
+        subjects: getSubjects(semesterElement.querySelector(".future-subjects"))
+    }));
 }
 
 function loadState(){
@@ -101,6 +212,7 @@ function loadState(){
 
     if(!savedState){
         addSubject();
+        addFutureSemester();
         return;
     }
 
@@ -112,6 +224,7 @@ function loadState(){
     catch(error){
         localStorage.removeItem(storageKey);
         addSubject();
+        addFutureSemester();
         return;
     }
 
@@ -119,8 +232,6 @@ function loadState(){
 
     setInputValue("currentCgpa", state.currentCgpa);
     setInputValue("currentCredits", state.currentCredits);
-    setInputValue("futureCredits", state.futureCredits);
-    setInputValue("expectedGpa", state.expectedGpa);
 
     semesterGpa = Number(state.semesterGpa) || 0;
     semesterCredits = Number(state.semesterCredits) || 0;
@@ -128,8 +239,10 @@ function loadState(){
     document.getElementById("semesterGpa").textContent = state.semesterGpaText || "0.00";
     document.getElementById("overallCgpa").textContent = state.overallCgpaText || "0.00";
     document.getElementById("predictedCgpa").textContent = state.predictedCgpaText || "0.00";
+    document.getElementById("projectedCredits").textContent = state.projectedCreditsText || "0";
 
     subjectsContainer.innerHTML = "";
+    futureSemestersContainer.innerHTML = "";
 
     if(state.subjects && state.subjects.length){
         state.subjects.forEach(subject => addSubject(subject));
@@ -138,49 +251,34 @@ function loadState(){
         addSubject();
     }
 
+    if(state.futureSemesters && state.futureSemesters.length){
+        state.futureSemesters.forEach(semester => addFutureSemester(semester));
+    }
+    else{
+        addFutureSemester();
+    }
+
     isRestoring = false;
+    updateAllFutureSemesterSummaries();
     saveState();
 }
 
-// Calculate Semester GPA
 function calculateSemester(){
+    const totals = calculateRows(document.querySelectorAll("#subjects .subject-row"));
 
-    const rows = document.querySelectorAll(".subject-row");
+    semesterCredits = totals.credits;
+    semesterGpa = totals.gpa;
 
-    let totalCredits = 0;
-    let totalPoints = 0;
-
-    rows.forEach(row=>{
-
-        const credits = Number(row.querySelector(".credits").value);
-
-        const grade = row.querySelector(".grade").value;
-
-        totalCredits += credits;
-
-        totalPoints += credits * gradePoints[grade];
-
-    });
-
-    semesterCredits = totalCredits;
-
-    semesterGpa = totalPoints / totalCredits || 0;
-
-    document.getElementById("semesterGpa").textContent =
-        semesterGpa.toFixed(2);
+    document.getElementById("semesterGpa").textContent = semesterGpa.toFixed(2);
 
     saveState();
-
 }
 
-// Calculate Overall CGPA
 function calculateCgpa(){
+    calculateSemester();
 
-    const currentCgpa =
-        Number(document.getElementById("currentCgpa").value);
-
-    const currentCredits =
-        Number(document.getElementById("currentCredits").value);
+    const currentCgpa = Number(document.getElementById("currentCgpa").value);
+    const currentCredits = Number(document.getElementById("currentCredits").value);
 
     const overall =
         (
@@ -190,45 +288,38 @@ function calculateCgpa(){
         /
         (currentCredits + semesterCredits);
 
-    document.getElementById("overallCgpa").textContent =
-        (overall || 0).toFixed(2);
+    document.getElementById("overallCgpa").textContent = (overall || 0).toFixed(2);
 
     saveState();
-
 }
 
-// What If Calculator
 function predictCgpa(){
+    const currentCgpa = Number(document.getElementById("currentCgpa").value);
+    const currentCredits = Number(document.getElementById("currentCredits").value);
+    const currentSemesterTotals = calculateRows(document.querySelectorAll("#subjects .subject-row"));
 
-    const currentCgpa =
-        Number(document.getElementById("currentCgpa").value);
+    let totalCredits = currentCredits + currentSemesterTotals.credits;
+    let totalPoints = currentCgpa * currentCredits + currentSemesterTotals.points;
 
-    const currentCredits =
-        Number(document.getElementById("currentCredits").value);
+    document.querySelectorAll(".future-semester").forEach(semesterElement => {
+        const totals = calculateRows(semesterElement.querySelectorAll(".subject-row"));
 
-    const futureCredits =
-        Number(document.getElementById("futureCredits").value);
+        totalCredits += totals.credits;
+        totalPoints += totals.points;
+        updateFutureSemesterSummary(semesterElement);
+    });
 
-    const expectedGpa =
-        Number(document.getElementById("expectedGpa").value);
+    semesterCredits = currentSemesterTotals.credits;
+    semesterGpa = currentSemesterTotals.gpa;
 
-    const predicted =
-        (
-            currentCgpa * currentCredits +
-            expectedGpa * futureCredits
-        )
-        /
-        (currentCredits + futureCredits);
-
-    document.getElementById("predictedCgpa").textContent =
-        (predicted || 0).toFixed(2);
+    document.getElementById("semesterGpa").textContent = semesterGpa.toFixed(2);
+    document.getElementById("predictedCgpa").textContent = (totalPoints / totalCredits || 0).toFixed(2);
+    document.getElementById("projectedCredits").textContent = totalCredits;
 
     saveState();
-
 }
 
-// Event Listeners
-["currentCgpa", "currentCredits", "futureCredits", "expectedGpa"].forEach(id => {
+["currentCgpa", "currentCredits"].forEach(id => {
     document.getElementById(id).addEventListener("input", saveState);
 });
 
@@ -243,6 +334,10 @@ document
 document
 .getElementById("calculateCgpaBtn")
 .addEventListener("click", calculateCgpa);
+
+document
+.getElementById("addFutureSemesterBtn")
+.addEventListener("click", () => addFutureSemester());
 
 document
 .getElementById("predictBtn")
